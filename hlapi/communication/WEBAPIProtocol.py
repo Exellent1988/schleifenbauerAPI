@@ -25,7 +25,7 @@ import socket
 import struct
 import time
 import urllib
-# import requests
+import requests
 
 # Local imports
 from .. Helper import Helper as HLAPIHelper
@@ -33,7 +33,6 @@ from .. spdm.RegisterHelper import RegisterHelper
 from .. spdm.Registers import *
 
 # Library imports
-from .. library import requests
 
 # Helper class for maintaining the connection
 class WebApiSync:

@@ -33,7 +33,7 @@ But if doing 'from crc.predefined import *', only PredefinedCrc is imported.
 '''
 
 # local imports
-import hlapi.library.crcmod as crcmod
+import crcmod as crcmod
 
 __all__ = [
 	'PredefinedCrc',

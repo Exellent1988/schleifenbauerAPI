@@ -66,8 +66,7 @@ print("Unlock success?", targetDevice.write('swounl', 'single', outlet_unlock))
 
 for i in range(0,len(outlet_state),1):
 	outlet_state[i] = 1
-outlet_state[1] = 1
-outlet_state[0] = 1
+
 
 print("Switch success?", targetDevice.write('swocst', 'single', outlet_state))
 

@@ -26,9 +26,9 @@ import urllib
 import re
 import ipaddress
 import time
-
+import requests
 # Library imports
-from . library import requests
+
 
 # Local imports
 from . Helper import Helper as HLAPIHelper

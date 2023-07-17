@@ -22,7 +22,7 @@ this software.
 import struct
 
 # Library imports
-from .. library.crcmod import *
+from crcmod import *
 
 calculateCrc = mkCrcFun(0x11021, rev=False, initCrc=0xFFFF)
 

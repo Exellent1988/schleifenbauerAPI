@@ -33,9 +33,11 @@ from hlapi.managers.MultiReadWrite import MultiReadWrite
 # 		"ipapi_key": "0000000000000000"
 # 	}
 # }
-
+ip = sys.argv[1]
+port = int(sys.argv[2])
+status = int(sys.argv[3])
 interfaces = {
-	"10.10.20.174": {
+	ip: {
 		"webapi_port": 80,
 		"webapi_user": "power",
 		"webapi_pass": "power",
@@ -64,8 +66,7 @@ if outlet_state is None or len(outlet_state) != 54:
 outlet_unlock = [1] * 54
 print("Unlock success?", targetDevice.write('swounl', 'single', outlet_unlock))
 
-for i in range(0,len(outlet_state),1):
-	outlet_state[i] = 0
+outlet_state[port] = status
 
 print("Switch success?", targetDevice.write('swocst', 'single', outlet_state))
 

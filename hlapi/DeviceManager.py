@@ -23,10 +23,10 @@ import json
 import queue
 import threading
 import time
-from copy import deepcopy
+# import deepcopy
 
 # Library imports
-from . library.dict2xml import dict2xml
+import dict2xml
 
 # Local imports
 from . Helper import Helper as HLAPIHelper
