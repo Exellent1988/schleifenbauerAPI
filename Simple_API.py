@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # -*- coding: utf-8 -*-
 '''
 Copyright:	Schleifenbauer - 2019
