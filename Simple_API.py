@@ -19,11 +19,10 @@ this software.
 '''
 
 import time
-import sys
+import argparse
 
 from hlapi.hlapi import HLAPI
 from hlapi.DeviceManager import DeviceManager
-from hlapi.managers.MultiReadWrite import MultiReadWrite
 
 
 # Standardwerte festlegen
@@ -34,80 +33,81 @@ default_password = "power"
 default_apikey = "0000000000000000"
 default_ports = "all"
 default_device_id = 0
-default_state = 1
+default_state = 'on'
 
-if "--help" in sys.argv:
-    print("Anleitung zur Verwendung:")
-    print("- Argument 1: IP-Adresse")
-    print("- Argument 2: WebAPI-Port | default = 80")
-    print("- Argument 3: Benutzer| default = 'power'")
-    print("- Argument 4: Passwort| default = 'power' ")
-    print("- Argument 5: API-Schlüssel | default = '0000000000000000' ")
-    print("- Argument 6: Target DeviceID | default = 0 ")
-    print("- Argument 7: Zu Schlatender Port der PDU | default = 'all' (0-24) ")
-    print("- Argument 8: Zustand den der Port erhalten soll | default = 'on' ('on','off','toggle')")
-    sys.exit(0)
-# Argumente verarbeiten oder Standardwerte verwenden
-ip = sys.argv[1] if len(sys.argv) > 1 else default_ip
-apiport = int(sys.argv[2]) if len(sys.argv) > 2 else default_port
-user = sys.argv[3] if len(sys.argv) > 3 else default_user
-password = sys.argv[4] if len(sys.argv) > 4 else default_password
-apikey = sys.argv[5] if len(sys.argv) > 5 else default_apikey
-device_id = int(sys.argv[6]) if len(sys.argv) > 6 else default_device_id
-port = sys.argv[7] if len(sys.argv) > 7 else default_ports
-state = sys.argv[8] if len(sys.argv) > 8 else default_state
 
-interfaces = {
-	ip: {
-		"webapi_port": apiport,
-		"webapi_user": user,
-		"webapi_pass": password,
-		"webapi_key": apikey
-	}
-}
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Schaltsteuerung für PDU")
+    parser.add_argument("--ip", default=default_ip, help="IP-Adresse")
+    parser.add_argument("--apiport", type=int, default=default_port, help="WebAPI-Port")
+    parser.add_argument("--user", default=default_user, help="Benutzer")
+    parser.add_argument("--password", default=default_password, help="Passwort")
+    parser.add_argument("--apikey", default=default_apikey, help="API-Schlüssel")
+    parser.add_argument("--device_id", type=int, default=default_device_id, help="Target DeviceID")
+    parser.add_argument("--port", default=default_ports, help="Zu schaltender Port der PDU")
+    parser.add_argument("--state", default=default_state, help="Zustand, den der Port erhalten soll")
 
-hlapi = HLAPI(debug=False)
+    return parser.parse_args()
 
-# Identify interface
-deviceManager = DeviceManager(hlapi)
-deviceManager.loadInterfaces(interfaces)
 
-# Use only first device
-targetDevice = deviceManager.devices[device_id]
-print("Found device:", targetDevice)
+def main():
+    args = parse_arguments()
+    interfaces = {
+        args.ip: {
+            "webapi_port": args.apiport,
+            "webapi_user": args.user,
+            "webapi_pass": args.password,
+            "ipapi_key": args.apikey
+        }
+    }
 
-outlet_state = targetDevice.read('swocst', 'single', extract=True)
-print("Current outlet state:", outlet_state)
+    hlapi = HLAPI(debug=True)
 
-# Safety measure
-if outlet_state is None or len(outlet_state) != 54:
-	sys.exit()
+    # Identify interface
+    deviceManager = DeviceManager(hlapi)
+    deviceManager.loadInterfaces(interfaces)
 
-# Unlock all outlets
-outlet_unlock = [1] * 54
-print("Unlock success?", targetDevice.write('swounl', 'single', outlet_unlock))
-if port == 'all':
-	for i in range(len(outlet_state)):
-		if state  == 'on':
-			state = 1
-		elif state == 'off':
-			state = 0
-		elif state == 'toggle':
-			state = outlet_state[i] ^ 1
-			
-		outlet_state[i] = state
-	
-else:
-	if state  == 'on':
-		state = 1
-	elif state == 'off':
-		state = 0
-	elif state == 'toggle':
-		state = outlet_state[port] ^ 1
-	outlet_state[port] = state
+    # Use only first device
+    targetDevice = deviceManager.devices[args.device_id]
+    print("Found device:", targetDevice)
 
-print("Switch success?", targetDevice.write('swocst', 'single', outlet_state))
+    outlet_state = targetDevice.read('swocst', 'single', extract=True)
+    print("Current outlet state:", outlet_state)
 
-# Wait 10 seconds for PDU to update internal outlet status
-time.sleep(10)
-print("New outlet state:", targetDevice.read('swocst', 'single', extract=True, cache=False))
+    # Safety measure
+    if outlet_state is None or len(outlet_state) != 54:
+        sys.exit()
+
+    # Unlock all outlets
+    outlet_unlock = [1] * 54
+    print("Unlock success?", targetDevice.write('swounl', 'single', outlet_unlock))
+
+    if args.port == 'all':
+        for i in range(len(outlet_state)):
+            if args.state == 'on':
+                state = 1
+            elif args.state == 'off':
+                state = 0
+            elif args.state == 'toggle':
+                state = outlet_state[i] ^ 1
+
+            outlet_state[i] = state
+
+    else:
+        if args.state == 'on':
+            state = 1
+        elif args.state == 'off':
+            state = 0
+        elif args.state == 'toggle':
+            state = outlet_state[int(args.port)] ^ 1
+        outlet_state[int(args.port)] = state
+
+    print("Switch success?", targetDevice.write('swocst', 'single', outlet_state))
+
+    # Wait 10 seconds for PDU to update internal outlet status
+    time.sleep(10)
+    print("New outlet state:", targetDevice.read('swocst', 'single', extract=True, cache=False))
+
+
+if __name__ == "__main__":
+    main()
