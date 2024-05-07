@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 
 # -*- coding: utf-8 -*-
 '''
@@ -54,6 +53,8 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
+    print (args.port)
+    
     interfaces = {
         args.ip: {
             "webapi_port": args.apiport,
@@ -63,7 +64,7 @@ def main():
         }
     }
 
-    hlapi = HLAPI(debug=True)
+    hlapi = HLAPI(debug=False)
 
     # Identify interface
     deviceManager = DeviceManager(hlapi)
@@ -83,7 +84,8 @@ def main():
     # Unlock all outlets
     outlet_unlock = [1] * 54
     print("Unlock success?", targetDevice.write('swounl', 'single', outlet_unlock))
-
+    args.port = [int(e) if e.isdigit() else e for e in args.port.split(',')]
+    print(args.port)
     if args.port == 'all':
         for i in range(len(outlet_state)):
             if args.state == 'on':
@@ -92,8 +94,18 @@ def main():
                 state = 0
             elif args.state == 'toggle':
                 state = outlet_state[i] ^ 1
-
             outlet_state[i] = state
+
+    elif len(args.port) >= 1 :
+         for i in args.port:
+             if args.state == 'on':
+                 state = 1
+             elif args.state == 'off':
+                 state = 0
+             elif args.state == 'toggle':
+                 state = outlet_state[i-1] ^ 1
+
+             outlet_state[i-1] = state
 
     else:
         if args.state == 'on':
@@ -101,8 +113,8 @@ def main():
         elif args.state == 'off':
             state = 0
         elif args.state == 'toggle':
-            state = outlet_state[int(args.port)] ^ 1
-        outlet_state[int(args.port)] = state
+            state = outlet_state[int(args.port)-1] ^ 1
+        outlet_state[int(args.port)-1] = state
 
     print("Switch success?", targetDevice.write('swocst', 'single', outlet_state))
 
